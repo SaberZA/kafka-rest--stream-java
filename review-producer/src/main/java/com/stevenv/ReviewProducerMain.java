@@ -2,6 +2,7 @@ package com.stevenv;
 
 import com.stevenv.rest.ReviewRestApiClient;
 import com.stevenv.runnable.ReviewFetcherThread;
+import com.stevenv.runnable.ReviewProducerThread;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpException;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ public class ReviewProducerMain {
     private final CountDownLatch latch;
     private AppConfig appConfig;
     private final ReviewFetcherThread reviewFetcherThread;
+    private final ReviewProducerThread reviewProducerThread;
 
     public static void main(String[] args) {
         ReviewProducerMain app = new ReviewProducerMain();
@@ -31,6 +33,7 @@ public class ReviewProducerMain {
         ArrayBlockingQueue<Review> reviewsQueue = new ArrayBlockingQueue<>(appConfig.getQueueCapacity());
 
         reviewFetcherThread = new ReviewFetcherThread(appConfig, reviewsQueue, latch);
+        reviewProducerThread = new ReviewProducerThread(appConfig, reviewsQueue, latch);
     }
 
     private void start() {
@@ -45,6 +48,7 @@ public class ReviewProducerMain {
         log.info("application started.");
 
         executor.submit(reviewFetcherThread);
+        executor.submit(reviewProducerThread);
 
         log.info("Started processors.");
         try {
